@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Coming Soon</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css?family=Poiret+One|Source+Sans+Pro');
+
+    * {
+      padding: 0;
+      margin: 0;
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      font-size: 110%;
+      color: #ecf0f1;
+      font-family: 'Source Sans Pro', sans-serif;
+      background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+      width: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      overflow: hidden;
+    }
+
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+
+    .main {
+      position: absolute;
+      height: 100%;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .contact {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .title {
+      font-family: 'Poiret One', cursive;
+      font-size: 4rem;
+      text-align: center;
+      margin-bottom: .5rem;
+      width: 100%;
+    }
+
+    .sub-title {
+      border-top: .1rem solid #fff;
+      padding: 1rem 4rem;
+      text-align: center;
+    }
+
+    /* Ship Controls UI */
+    .controls {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: rgba(15, 20, 30, 0.85);
+      padding: 1.5rem;
+      border: 1px solid #444;
+      border-radius: 8px;
+      z-index: 10;
+      font-family: 'Source Sans Pro', sans-serif;
+      display: none;
+      flex-direction: column;
+      gap: 0.75rem;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+      pointer-events: auto;
+    }
+
+    .controls h3 {
+      font-family: 'Poiret One', cursive;
+      margin-bottom: 0.5rem;
+      text-align: center;
+      font-size: 1.5rem;
+      border-bottom: 1px solid #555;
+      padding-bottom: 0.5rem;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .control-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      color: #aaa;
+    }
+
+    .control-header span {
+      color: #fff;
+      font-weight: bold;
+    }
+
+    input[type=range] {
+      width: 200px;
+      cursor: pointer;
+    }
+
+    #btnCopy {
+      background: #ecf0f1;
+      color: #090a0f;
+      border: none;
+      padding: 0.5rem;
+      font-family: 'Source Sans Pro', sans-serif;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 0.5rem;
+      transition: background 0.2s;
+    }
+
+    #btnCopy:hover {
+      background: #fff;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="starfield" aria-hidden="true"></canvas>
+
+  <div class="controls" id="debugControls">
+    <h3>Ship Params</h3>
+
+    <div class="control-group">
+      <div class="control-header">
+        <label>Swerve Chance</label>
+        <span id="valSwerve">0.035</span>
+      </div>
+      <input type="range" id="inpSwerve" min="0" max="0.1" step="0.001" value="0.035">
+    </div>
+
+    <div class="control-group">
+      <div class="control-header">
+        <label>Max Angle (rad)</label>
+        <span id="valAngle">1.000</span>
+      </div>
+      <input type="range" id="inpAngle" min="0.1" max="6.0" step="0.05" value="1.0">
+    </div>
+
+    <div class="control-group">
+      <div class="control-header">
+        <label>Turn Speed</label>
+        <span id="valTurn">0.100</span>
+      </div>
+      <input type="range" id="inpTurn" min="0.01" max="0.2" step="0.01" value="0.1">
+    </div>
+
+    <div class="control-group">
+      <div class="control-header">
+        <label>Thrust Power</label>
+        <span id="valThrust">0.080</span>
+      </div>
+      <input type="range" id="inpThrust" min="0.01" max="0.2" step="0.01" value="0.08">
+    </div>
+
+    <div class="control-group">
+      <div class="control-header">
+        <label>Max Speed</label>
+        <span id="valSpeed">2.000</span>
+      </div>
+      <input type="range" id="inpSpeed" min="0.5" max="10.0" step="0.1" value="2.0">
+    </div>
+
+    <div class="control-group">
+      <div class="control-header">
+        <label>Spawn Interval (ms)</label>
+        <span id="valSpawn">20000</span>
+      </div>
+      <input type="range" id="inpSpawn" min="1000" max="60000" step="1000" value="20000">
+    </div>
+
+    <button id="btnCopy">Copy Config</button>
+  </div>
+
+  <main class="main">
+    <section class="contact">
+      <h1 class="title">Ruinious Pile of Crap</h1>
+      <h2 class="sub-title">Site Under Construction</h2>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById('starfield');
+    const ctx = canvas.getContext('2d');
+
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('debug') === true) {
+      document.getElementById('debugControls').style.display = 'flex';
+    }
+
+    let width;
+    let height;
+    let stars = [];
+
+    const layerConfigs = [
+      { count: 500, size: 1, speed: 0.3 },
+      { count: 150, size: 2, speed: 0.7 },
+      { count: 75, size: 3, speed: 1.1 }
+    ];
+
+    const shipParams = {
+      swerveChance: 0.035,
+      maxAngle: 1,
+      turnSpeed: 0.1,
+      thrustPower: 0.09,
+      maxSpeed: 4.6,
+      spawnInterval: 5000
+    };
+
+    const bindControl = (inputId, displayId, paramKey, decimals = 3) => {
+      const input = document.getElementById(inputId);
+      const display = document.getElementById(displayId);
+      input.addEventListener('input', (e) => {
+        const val = parseFloat(e.target.value);
+        shipParams[paramKey] = val;
+        display.innerText = val.toFixed(decimals);
+      });
+    };
+
+    bindControl('inpSwerve', 'valSwerve', 'swerveChance');
+    bindControl('inpAngle', 'valAngle', 'maxAngle');
+    bindControl('inpTurn', 'valTurn', 'turnSpeed');
+    bindControl('inpThrust', 'valThrust', 'thrustPower');
+    bindControl('inpSpeed', 'valSpeed', 'maxSpeed');
+    bindControl('inpSpawn', 'valSpawn', 'spawnInterval', 0);
+
+    document.getElementById('btnCopy').addEventListener('click', () => {
+      const output = `const shipParams = {
+  swerveChance: ${shipParams.swerveChance},
+  maxAngle: ${shipParams.maxAngle},
+  turnSpeed: ${shipParams.turnSpeed},
+  thrustPower: ${shipParams.thrustPower},
+  maxSpeed: ${shipParams.maxSpeed},
+  spawnInterval: ${shipParams.spawnInterval}
+};`;
+
+      navigator.clipboard.writeText(output).then(() => {
+        const btn = document.getElementById('btnCopy');
+        btn.innerText = 'Copied!';
+        setTimeout(() => {
+          btn.innerText = 'Copy Config';
+        }, 2000);
+      });
+    });
+
+    const ship = {
+      active: false,
+      x: 0,
+      y: 0,
+      vx: 0,
+      vy: 0,
+      angle: 0,
+      targetAngle: 0,
+      isThrusting: false,
+      lastSpawnTime: Date.now()
+    };
+
+    function resize() {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+      initStars();
+    }
+
+    function initStars() {
+      stars = [];
+      for (let i = 0; i < layerConfigs.length; i++) {
+        const config = layerConfigs[i];
+        for (let j = 0; j < config.count; j++) {
+          stars.push({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            size: config.size,
+            speed: config.speed
+          });
+        }
+      }
+    }
+
+    function spawnShip() {
+      ship.active = true;
+      ship.x = -50;
+      ship.y = height * 0.2 + (Math.random() * (height * 0.6));
+      ship.vx = 1.5;
+      ship.vy = 0;
+      ship.angle = 0;
+      ship.targetAngle = (Math.random() - 0.5) * shipParams.maxAngle;
+      ship.isThrusting = false;
+    }
+
+    function updateShip() {
+      if (ship.active === false) {
+        if (Date.now() - ship.lastSpawnTime > shipParams.spawnInterval) {
+          spawnShip();
+        }
+        return;
+      }
+
+      if (Math.random() < shipParams.swerveChance) {
+        ship.targetAngle = (Math.random() - 0.5) * shipParams.maxAngle;
+      }
+
+      let deltaAngle = ship.targetAngle - ship.angle;
+
+      // Normalize the angle to find the shortest turning distance
+      while (deltaAngle > Math.PI) deltaAngle -= Math.PI * 2;
+      while (deltaAngle < -Math.PI) deltaAngle += Math.PI * 2;
+
+      if (Math.abs(deltaAngle) > shipParams.turnSpeed) {
+        ship.angle += Math.sign(deltaAngle) * shipParams.turnSpeed;
+        ship.isThrusting = false;
+      } else {
+        ship.angle = ship.targetAngle;
+        ship.isThrusting = true;
+        ship.vx += Math.cos(ship.angle) * shipParams.thrustPower;
+        ship.vy += Math.sin(ship.angle) * shipParams.thrustPower;
+      }
+
+      const currentSpeed = Math.sqrt(ship.vx * ship.vx + ship.vy * ship.vy);
+      if (currentSpeed > shipParams.maxSpeed) {
+        ship.vx = (ship.vx / currentSpeed) * shipParams.maxSpeed;
+        ship.vy = (ship.vy / currentSpeed) * shipParams.maxSpeed;
+      }
+
+      ship.x += ship.vx;
+      ship.y += ship.vy;
+
+      if (ship.x > width + 100 || ship.x < -100 || ship.y < -100 || ship.y > height + 100) {
+        ship.active = false;
+        ship.lastSpawnTime = Date.now();
+      }
+    }
+
+    function drawShip() {
+      if (ship.active === false) {
+        return;
+      }
+
+      ctx.save();
+      ctx.translate(ship.x, ship.y);
+      ctx.rotate(ship.angle);
+
+      ctx.strokeStyle = '#FFF';
+      ctx.lineWidth = 1.5;
+
+      ctx.beginPath();
+      ctx.moveTo(15, 0);
+      ctx.lineTo(-10, -10);
+      ctx.lineTo(-5, 0);
+      ctx.lineTo(-10, 10);
+      ctx.closePath();
+      ctx.stroke();
+
+      if (ship.isThrusting === true && Math.random() < 0.5) {
+        ctx.beginPath();
+        ctx.moveTo(-5, 0);
+        ctx.lineTo(-15, -4);
+        ctx.lineTo(-20, 0);
+        ctx.lineTo(-15, 4);
+        ctx.closePath();
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = '#FFF';
+
+      for (let i = 0; i < stars.length; i++) {
+        const star = stars[i];
+
+        star.y -= star.speed;
+
+        if (star.y < 0) {
+          star.y = height;
+          star.x = Math.random() * width;
+        }
+
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.size / 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      updateShip();
+      drawShip();
+
+      requestAnimationFrame(animate);
+    }
+
+    window.addEventListener('resize', resize);
+
+    resize();
+    animate();
+  </script>
+</body>
+</html>

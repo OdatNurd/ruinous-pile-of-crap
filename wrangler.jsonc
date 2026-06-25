@@ -1,0 +1,27 @@
+{
+  "name": "ruinous-homepage",
+  "compatibility_date": "2026-06-24",
+
+  /* No preview deployments, only the real deal. */
+  "workers_dev": false,
+  "preview_urls": false,
+
+  /* The folder that holds our deployed assets. */
+  "assets": {
+    "directory": "./site/",
+    "not_found_handling": "404-page",
+    "html_handling": "auto-trailing-slash"
+  },
+
+  /* The domain to publish to. */
+  "routes": [
+    {
+      "pattern": "ruinouspileofcrap.com",
+      "custom_domain": true,
+    },
+    {
+      "pattern": "www.ruinouspileofcrap.com",
+      "custom_domain": true,
+    },
+  ]
+}
